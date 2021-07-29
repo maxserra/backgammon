@@ -42,7 +42,7 @@ class BackgammonGame():
                     pass
                 print("Invalid moves, try again...")
             # Apply moves to the board
-            self.board.applyMoves(self.whoseTurn, moves)
+            self.board.applyMoves(self.whoseTurn, moves[0] + moves[1])
             # Switch player
             self.whoseTurn *= -1
 
@@ -132,17 +132,18 @@ class BackgammonParser():
     def __init__(self) -> None:
         pass
     
-    def strToArray(self, moves: str) -> np.ndarray:
-        # Create return array
-        arrMoves = np.zeros(26)
+    def strToArray(self, strMoves: str) -> tuple[np.ndarray, np.ndarray]:
         # Split input
-        moves = moves.split(";")
+        strMoves = strMoves.split(";")
         # Check number of moves. Must be either 2 or 4
-        if len(moves) not in [2,4]:
+        if len(strMoves) not in [2,4]:
             raise ValueError
+        # Create return array
+        arrMovesFrom = np.zeros(26)
+        arrMovesTo   = np.zeros(26)
         # Check moves format and type
-        for i in range(len(moves)):
-            move = moves[i].split(",")
+        for i in range(len(strMoves)):
+            move = strMoves[i].split(",")
             # Check that each move is complete
             if len(move) != 2:
                 raise ValueError
@@ -155,10 +156,11 @@ class BackgammonParser():
             if moveFrom not in range(26) and moveTo not in range(26):
                 raise ValueError
             # Implement move to arrMoves
-            arrMoves[moveFrom] -= 1
-            arrMoves[moveTo]   += 1
+            arrMovesFrom[moveFrom] -= 1
+            arrMovesTo[moveTo]     += 1
         # Return array
-        return arrMoves
+        return arrMovesFrom, arrMovesTo
+
 
 class BackgammonRules():
     
