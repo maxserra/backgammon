@@ -31,6 +31,7 @@ class BackgammonGame():
                     # Parse the moves into array format
                     moves = BackgammonParser().strToArray(moves)
                     print(moves)
+                    strMoves = BackgammonParser().arrayToStr(moves)
                     # Check validity of the moves
                     # TODO
                     break
@@ -161,13 +162,94 @@ class BackgammonParser():
         # Return array
         return arrMovesFrom, arrMovesTo
 
+    def arrayToStr(self, arrMoves: tuple[np.ndarray, np.ndarray]) -> np.ndarray:
+        # Create temp variables
+        origins = []; destins = []
+        # Find the origin and destins
+        for i in range(len(arrMoves[0])):
+            # Origins are negative
+            if arrMoves[0][i] < 0:
+                origins.append(i)
+            # Destins are positive
+            if arrMoves[1][i] > 0:
+                destins.append(i)
+        # Create return array
+        strMoveOptions = []
+        # Generate possible moves options
+        moveCombs = np.array(np.meshgrid(origins, destins)).T.reshape(-1,2)
+        if len(moveCombs) == 4:
+            strMoveOptions.append([moveCombs[0],moveCombs[3]])
+            strMoveOptions.append([moveCombs[1],moveCombs[2]])
+        else:
+            strMoveOptions.append([moveCombs[0],moveCombs[5],moveCombs[10],moveCombs[15]])
+            strMoveOptions.append([moveCombs[0],moveCombs[5],moveCombs[11],moveCombs[14]])
+            strMoveOptions.append([moveCombs[0],moveCombs[6],moveCombs[ 9],moveCombs[15]])
+            strMoveOptions.append([moveCombs[0],moveCombs[6],moveCombs[11],moveCombs[13]])
+            strMoveOptions.append([moveCombs[0],moveCombs[7],moveCombs[ 9],moveCombs[14]])
+            strMoveOptions.append([moveCombs[0],moveCombs[7],moveCombs[10],moveCombs[13]])
+            strMoveOptions.append([moveCombs[1],moveCombs[4],moveCombs[10],moveCombs[15]])
+            strMoveOptions.append([moveCombs[1],moveCombs[4],moveCombs[11],moveCombs[14]])
+            strMoveOptions.append([moveCombs[1],moveCombs[6],moveCombs[ 8],moveCombs[15]])
+            strMoveOptions.append([moveCombs[1],moveCombs[6],moveCombs[11],moveCombs[12]])
+            strMoveOptions.append([moveCombs[1],moveCombs[7],moveCombs[ 8],moveCombs[14]])
+            strMoveOptions.append([moveCombs[1],moveCombs[7],moveCombs[10],moveCombs[12]])
+            strMoveOptions.append([moveCombs[2],moveCombs[4],moveCombs[ 9],moveCombs[15]])
+            strMoveOptions.append([moveCombs[2],moveCombs[4],moveCombs[11],moveCombs[13]])
+            strMoveOptions.append([moveCombs[2],moveCombs[5],moveCombs[ 8],moveCombs[15]])
+            strMoveOptions.append([moveCombs[2],moveCombs[5],moveCombs[11],moveCombs[12]])
+            strMoveOptions.append([moveCombs[2],moveCombs[7],moveCombs[ 8],moveCombs[13]])
+            strMoveOptions.append([moveCombs[2],moveCombs[7],moveCombs[ 9],moveCombs[12]])
+            strMoveOptions.append([moveCombs[3],moveCombs[4],moveCombs[ 9],moveCombs[14]])
+            strMoveOptions.append([moveCombs[3],moveCombs[4],moveCombs[10],moveCombs[13]])
+            strMoveOptions.append([moveCombs[3],moveCombs[5],moveCombs[ 8],moveCombs[14]])
+            strMoveOptions.append([moveCombs[3],moveCombs[5],moveCombs[10],moveCombs[12]])
+            strMoveOptions.append([moveCombs[3],moveCombs[6],moveCombs[ 8],moveCombs[13]])
+            strMoveOptions.append([moveCombs[3],moveCombs[6],moveCombs[ 9],moveCombs[12]])
+        # Convert to numpy array
+        strMoveOptions = np.array(strMoveOptions)
+        print(strMoveOptions)
+        # Discard invalid options
+        # Create moveStep array
+        moveSteps = strMoveOptions[:,:,1] - strMoveOptions[:,:,0]
+        print(moveSteps)
+        # Check that moveStep are lower than or eq. to 6 and diff to 0
+        moveStepsRange = np.all(np.logical_and(abs(moveSteps) <= 6, moveSteps != 0), axis=1)
+        print(moveStepsRange)
+        # Check that moveStep have same sign (a player can only move in one direction)
+        #moveStepsSign = np.all(np., axis=1)
+        #for option in strMoveOptions:
+        #    for j in range(len(option)):
+        #        step = option[j]
+        #        if step[1] - step[0] == 0 or abs(step[1] - step[0]) > 6:
+        #            break
+
+
+        return strMoveOptions
+
 
 class BackgammonRules():
     
     def __init__(self) -> None:
         pass
     
-    def checkMove(self, positions: np.ndarray, player: int, moveFrom: int, moveTo: int) -> bool:
+    def checkMoves(self, positions: np.ndarray, arrMoves: np.ndarray, player: int, diceRolls: np.ndarray) -> bool:
+        # Check player value
+        if player != blackPlayer and player != whitePlayer:
+            return False
+        # Check that moves are balanced
+        if arrMoves.sum() != 0:
+            return False
+        # Check that there are actual moves
+        if (arrMoves == 0).sum() == len(arrMoves):
+            return False
+        # Parse the array of moves
+        moveOptions = BackgammonParser().arrayToStr(arrMoves, player, diceRolls)
+        # 
+        for i in range(len(moveOptions)):
+            pass
+        pass
+
+    def checkMoveOld(self, positions: np.ndarray, player: int, moveFrom: int, moveTo: int) -> bool:
         # Check boundary conditions
         if player != blackPlayer and player != whitePlayer:
             return False
