@@ -134,7 +134,34 @@ class BackgammonParser():
     def __init__(self) -> None:
         pass
     
-    def strToArray(self, strMoves: str) -> tuple[np.ndarray, np.ndarray]:
+    def strToArray(self, strMoves: str) -> np.ndarray:
+        # Split input
+        strMoves = strMoves.split(";")
+        # Check number of moves. Must be either 2 or 4
+        if len(strMoves) not in [2,4]:
+            raise ValueError
+        # Create return array
+        arrMoves = np.empty((1,2,2), dtype=int)
+        for i in range(len(strMoves)):
+            move = strMoves[i].split(",")
+            # Check that each move is complete
+            if len(move) != 2:
+                raise ValueError
+            # Try to cast the move
+            try:
+                moveFrom, moveTo = [int(val) for val in move]
+            except:
+                raise TypeError
+            # Check range
+            if moveFrom not in range(26) and moveTo not in range(26):
+                raise ValueError
+            # Write move to arrMoves
+            arrMoves[0,i,0] = moveFrom
+            arrMoves[0,i,1] = moveTo
+        # Return arrMoves
+        return arrMoves
+    
+    def strToBoardMoves(self, strMoves: str) -> tuple[np.ndarray, np.ndarray]:
         # Split input
         strMoves = strMoves.split(";")
         # Check number of moves. Must be either 2 or 4
@@ -163,7 +190,7 @@ class BackgammonParser():
         # Return array
         return arrMovesFrom, arrMovesTo
 
-    def arrayToStr(self, arrMoves: tuple[np.ndarray, np.ndarray]) -> np.ndarray:
+    def movesToArray(self, arrMoves: tuple[np.ndarray, np.ndarray]) -> np.ndarray:
         # Create temp variables
         origins = []; destins = []
         # Find the origin and destins
@@ -174,6 +201,9 @@ class BackgammonParser():
             # Destins are positive
             if arrMoves[1][i] > 0:
                 destins.append(i)
+        # Check number of moves. Must be either 2 or 4
+        if len(origins) not in [2,4] or len(destins) not in [2,4]:
+            raise ValueError
         # Create return array
         strMoveOptions = []
         # Generate possible moves options
@@ -208,23 +238,21 @@ class BackgammonParser():
             strMoveOptions.append([moveCombs[3],moveCombs[6],moveCombs[ 9],moveCombs[12]])
         # Convert to numpy array
         strMoveOptions = np.array(strMoveOptions)
-        print(strMoveOptions)
+        #### TODO as log: print('options: ',strMoveOptions)
         # Discard invalid options
         # Create moveStep array
         moveSteps = strMoveOptions[:,:,1] - strMoveOptions[:,:,0]
-        print(moveSteps)
         # Check that moveStep are lower than or eq. to 6 and diff to 0
         moveStepsRange = np.all(np.logical_and(abs(moveSteps) <= 6, moveSteps != 0), axis=1)
-        print(moveStepsRange)
+        #### TODO as log: print(moveStepsRange)
         # Check that moveStep have same sign (a player can only move in one direction)
-        #moveStepsSign = np.all(np., axis=1)
-        #for option in strMoveOptions:
-        #    for j in range(len(option)):
-        #        step = option[j]
-        #        if step[1] - step[0] == 0 or abs(step[1] - step[0]) > 6:
-        #            break
-
-
+        moveStepsSign = moveSteps > 0
+        moveStepsSign = np.all(moveStepsSign, axis=1)
+        #### TODO as log: print(moveStepsSign)
+        # Select only valid options
+        strMoveOptions = strMoveOptions[np.logical_and(moveStepsSign, moveStepsRange)]
+        #### TODO as log: print('slected: ', strMoveOptions)
+        # Return move options
         return strMoveOptions
 
 class BackgammonRules():
