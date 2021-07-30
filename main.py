@@ -18,23 +18,24 @@ class BackgammonGame():
     def mainLoop(self):
         while self.gameFinished == False:
             # Generate the dice rolls
-            a = random.randint(1,6); b = random.randint(1,6)
+            diceRolls = np.random.randint(1, 7, 2)
             # Show the board
             self.board.display()
             player = "Black" if self.whoseTurn == blackPlayer else "White"
-            print(f"{player} dice rolled {a} and {b}! \nMoves format: 'from,to;from,to;from,to;from,to'")
+            print(f"{player} dice rolled {diceRolls[0]} and {diceRolls[1]}! \nMoves format: 'from,to;from,to;from,to;from,to'")
             # Get moves
             while True:
                 try:
                     # Get the next moves
-                    moves = input(f"What are {player} moves? ")
+                    strMoves = input(f"What are {player} moves? ")
                     # Parse the moves into array format
-                    moves = BackgammonParser().strToArray(moves)
-                    print(moves)
-                    strMoves = BackgammonParser().arrayToStr(moves)
+                    arrMoves = BackgammonParser().strToArray(strMoves)
+                    boardMoves = BackgammonParser().strToBoardMoves(strMoves) # TODO: change to arrayToMoves
+                    ## # Parse the array into array format (will be necessary later)
+                    ## strMoves = BackgammonParser().movesToArray(moves)
                     # Check validity of the moves
-                    # TODO
-                    break
+                    if BackgammonRules().checkMoves(self.board.positions, arrMoves, player, diceRolls):
+                        break
                 # Allow ctrl+C to exit
                 except KeyboardInterrupt:
                     exit(0)
@@ -43,7 +44,7 @@ class BackgammonGame():
                     pass
                 print("Invalid moves, try again...")
             # Apply moves to the board
-            self.board.applyMoves(self.whoseTurn, moves[0] + moves[1])
+            self.board.applyMoves(self.whoseTurn, boardMoves[0] + boardMoves[1])
             # Switch player
             self.whoseTurn *= -1
 
