@@ -226,30 +226,29 @@ class BackgammonParser():
 
         return strMoveOptions
 
-
 class BackgammonRules():
     
     def __init__(self) -> None:
         pass
     
     def checkMoves(self, positions: np.ndarray, arrMoves: np.ndarray, player: int, diceRolls: np.ndarray) -> bool:
-        # Check player value
-        if player != blackPlayer and player != whitePlayer:
-            return False
-        # Check that moves are balanced
-        if arrMoves.sum() != 0:
-            return False
-        # Check that there are actual moves
-        if (arrMoves == 0).sum() == len(arrMoves):
-            return False
-        # Parse the array of moves
-        moveOptions = BackgammonParser().arrayToStr(arrMoves, player, diceRolls)
-        # 
-        for i in range(len(moveOptions)):
-            pass
-        pass
+        for move in arrMoves:
+            # Create moveSteps array
+            moveSteps = move[:,1] - move[:,0]
+            # Repeat diceRolls 2 times if pairs were rolled
+            if diceRolls[0] == diceRolls[1]:
+                diceRolls = np.repeat(diceRolls, 2)
+            # Check that the moves match
+            if not np.array_equal(np.sort(abs(moveSteps)), np.sort(diceRolls)):
+                continue
+            if self.checkSingleMove(positions, player, move[0,0], move[0,1]):
+                tempBoard = BackgammonBoard()
+                tempBoard.setPositions(positions)
+                if self.checkSingleMove(tempBoard.positions, player, move[1,0], move[1,1]):
+                    return True
+        return False
 
-    def checkMoveOld(self, positions: np.ndarray, player: int, moveFrom: int, moveTo: int) -> bool:
+    def checkSingleMove(self, positions: np.ndarray, player: int, moveFrom: int, moveTo: int) -> bool:
         # Check boundary conditions
         if player != blackPlayer and player != whitePlayer:
             return False
@@ -263,23 +262,23 @@ class BackgammonRules():
         if player == whitePlayer and moveFrom < moveTo:
             return False
         # Check if origin belongs to player
-        if positions[moveFrom][0] != player:
+        if np.sign(positions[moveFrom]) != player:
             return False
         # Check if target belongs to player and has 5+
-        if positions[moveTo][0] == player and positions[moveTo][1] >= 5:
+        if np.sign(positions[moveTo]) == player and abs(positions[moveTo]) >= 5:
             return False
         # Check if target belongs to oponent and has 2+
-        if positions[moveTo][0] == -player and positions[moveTo][1] >= 2:
+        if np.sign(positions[moveTo]) != player and abs(positions[moveTo]) >= 2:
             return False
         # Check if moving 'out' is allowed - black
         if player == blackPlayer and moveTo == 25:
             # Check if all pieces are in the last 6 positions
-            if blackPlayer in positions[:19,0]:
+            if np.any(np.sign(positions[:19]) == player):
                 return False
         # Check if moving 'out' is allowed - white
         if player == whitePlayer and moveTo == 0:
             # Check if all pieces are in the last 6 positions
-            if whitePlayer in positions[6:,0]:
+            if np.any(np.sign(positions[6:]) == player):
                 return False
         
         # The move is valid
