@@ -21,20 +21,20 @@ class BackgammonGame():
             diceRolls = np.random.randint(1, 7, 2)
             # Show the board
             self.board.display()
-            player = "Black" if self.whoseTurn == blackPlayer else "White"
-            print(f"{player} dice rolled {diceRolls[0]} and {diceRolls[1]}! \nMoves format: 'from,to;from,to;from,to;from,to'")
+            strPlayer = "Black" if self.whoseTurn == blackPlayer else "White"
+            print(f"{strPlayer} dice rolled {diceRolls[0]} and {diceRolls[1]}! \nMoves format: 'from,to;from,to;from,to;from,to'")
             # Get moves
             while True:
                 try:
                     # Get the next moves
-                    strMoves = input(f"What are {player} moves? ")
+                    strMoves = input(f"What are {strPlayer} moves? ")
                     # Parse the moves into array format
                     arrMoves = BackgammonParser().strToArray(strMoves)
                     boardMoves = BackgammonParser().strToBoardMoves(strMoves) # TODO: change to arrayToMoves
                     ## # Parse the array into array format (will be necessary later)
                     ## strMoves = BackgammonParser().movesToArray(moves)
                     # Check validity of the moves
-                    if BackgammonRules().checkMoves(self.board.positions, arrMoves, player, diceRolls):
+                    if BackgammonRules().checkMoves(self.board.positions, arrMoves, self.whoseTurn, diceRolls):
                         break
                 # Allow ctrl+C to exit
                 except KeyboardInterrupt:
