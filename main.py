@@ -44,7 +44,14 @@ class BackgammonGame():
                     pass
                 print("Invalid moves, try again...")
             # Apply moves to the board
-            self.board.applyMoves(self.whoseTurn, boardMoves[0] + boardMoves[1])
+            outcome = self.board.applyMoves(self.whoseTurn, boardMoves[0] + boardMoves[1])
+            # Handle end of the game
+            if outcome == blackPlayer:
+                self.gameFinished = True
+                print("Black player wins!!!")
+            elif outcome == whitePlayer:
+                self.gameFinished = True
+                print("Black player wins!!!")
             # Switch player
             self.whoseTurn *= -1
 
