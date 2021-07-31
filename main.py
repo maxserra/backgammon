@@ -148,7 +148,7 @@ class BackgammonParser():
         if len(strMoves) not in [2,4]:
             raise ValueError
         # Create return array
-        arrMoves = np.empty((1,2,2), dtype=int)
+        arrMoves = np.empty((1,len(strMoves),2), dtype=int)
         for i in range(len(strMoves)):
             move = strMoves[i].split(",")
             # Check that each move is complete
