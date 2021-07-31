@@ -83,10 +83,10 @@ class BackgammonBoard():
                 elif i == 0:
                     self.whitesHome += 1
             # If putting pieces to own or empty field
-            elif moves[i] > 0 and self.positions[i]/player >= 0:
-                self.positions[i] = self.positions[i] + player * moves[i]
+            elif moves[i] > 0 and np.sign(self.positions[i]) == player:
+                self.positions[i] += player * moves[i]
             # If putting pieces to contrary field
-            elif moves[i] > 0 and self.positions[i]/player < 0:
+            elif moves[i] > 0 and np.sign(self.positions[i]) != player:
                 # If whites gets kicked
                 if player == blackPlayer:
                     self.positions[25] += whitePlayer
@@ -95,6 +95,13 @@ class BackgammonBoard():
                 if player == whitePlayer:
                     self.positions[0] += blackPlayer
                     self.positions[i] = player * moves[i]
+        # Check if game is over
+        if self.blacksHome == 15:
+            return blackPlayer
+        elif self.whitesHome == 15:
+            return whitePlayer
+        else:
+            return 0
         
     def display(self):
         print("|                                        | 1 | 1 | 1 |")
