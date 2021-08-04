@@ -221,11 +221,11 @@ class BackgammonParser():
         Returns
         -------
         ndarray
-            Array of shape (1,2,2) (or (1,4,2) when doubles are rolled) containign the moves
-            Format: [[[from_0, to_0],
-                      [from_1, to_1],
-                     ([from_2, to_2],
-                      [from_3, to_3])]]
+            Array of shape (1,n,2) containign the moves
+            Where n is the number of possible moves
+            Format (for n = 3): [[[from_0, to_0],
+                                  [from_1, to_1],
+                                  [from_2, to_2]]]
         """
         # Split input
         moves = strMoves.split(";")
@@ -245,11 +245,11 @@ class BackgammonParser():
             try:
                 moveFrom, moveTo = [int(val) for val in move]
             except:
-                logging.debug(f"Move '{move}' could not be casted to int")
+                logging.debug(f"Move '{move.tolist()}' could not be casted to int")
                 raise TypeError
             # Check range
             if moveFrom not in range(26) and moveTo not in range(26):
-                logging.debug(f"Move '{move}' values are out of range")
+                logging.debug(f"Move '{move.tolist()}' values are out of range")
                 raise ValueError
             # Write move to arrMoves
             arrMoves[0,i,0] = moveFrom
