@@ -69,10 +69,11 @@ class BackgammonGame():
 
 class BackgammonBoard():
     
-    def __init__(self) -> None:
+    def __init__(self, logging : bool = True) -> None:
         self.positions = self.initialPositions()
         self.blacksHome = 0
         self.whitesHome = 0
+        self.enableLogging = logging
         
     def initialPositions(self):
         return np.array([0, 
@@ -97,15 +98,21 @@ class BackgammonBoard():
         player : int
             The player that does the moves
         moves : ndarray
-            Array of shape (n,2,2) (or (n,4,2) when doubles are rolled) containign the moves.
-            Where n is the number of possible move combinations
-            Format: [[[from_0, to_0],
-                      [from_1, to_1],
-                     ([from_2, to_2],
-                      [from_3, to_3])]]
+            Array of shape (n,2) containign the moves.
+            Where n is the number of moves
+            Format (for n = 4): [[from_0, to_0],
+                                 [from_1, to_1],
+                                 [from_2, to_2],
+                                 [from_3, to_3]]
+                                 
+        Returns
+        -------
+        int
+            0 if the game is still on
+            blackPlayer (whitePlayer) if the Black (White) player has won
         """
         # Apply the moves iteratively
-        for move in moves[0]:
+        for move in moves:
             self.applySingleMove(player, BackgammonParser().singleMoveToBoardMove(move))
         # Check if game is over
         if self.blacksHome == 15:
@@ -116,31 +123,53 @@ class BackgammonBoard():
             return 0
     
     def applySingleMove(self, player: int, move: np.ndarray):
+        """Applies a single move to the board
+        
+        Parameters
+        ----------
+        player : int
+            The player that does the moves
+        move : ndarray
+            Array of shape (26,) containg the move in boardMove representation
+            Format: all zeros except for positions 'from' and 'to'. 'from' = -1 and 'to' = +1 
+        """
         for i in range(len(self.positions)):
             # If taking pieces
             if move[i] < 0:
                 self.positions[i] += player * move[i]
+                if self.enableLogging:
+                    logging.debug(f"Player {player} takes {abs(move[i])} piece(s) from {i}")
             # If putting pieces to home
             elif move[i] > 0 and i in [0, 25]:
                 # Black putting home
                 if i == 25:
-                    self.blacksHome += 1
+                    self.blacksHome += move[i]
+                    if self.enableLogging:
+                        logging.info(f"Black player ({player}) puts {move[i]} piece(s) home")
                 # White putiing home
                 elif i == 0:
-                    self.whitesHome += 1
+                    self.whitesHome += move[i]
+                    if self.enableLogging:
+                        logging.info(f"White player ({player}) puts {move[i]} piece(s) home")
             # If putting pieces to own or empty field
             elif move[i] > 0 and np.sign(self.positions[i]) in [player, 0]:
                 self.positions[i] += player * move[i]
+                if self.enableLogging:
+                    logging.debug(f"Player {player} puts {abs(move[i])} piece(s) to {i}")
             # If putting pieces to contrary field
             elif move[i] > 0 and np.sign(self.positions[i]) == -player:
                 # If whites gets kicked
                 if player == blackPlayer:
                     self.positions[25] += whitePlayer
                     self.positions[i] = player * move[i]
+                    if self.enableLogging:
+                        logging.debug(f"Player {player} puts {abs(move[i])} piece(s) to {i} and kicks out player {-player}")
                 # If blacks gets kicked
                 if player == whitePlayer:
                     self.positions[0] += blackPlayer
                     self.positions[i] = player * move[i]
+                    if self.enableLogging:
+                        logging.debug(f"Player {player} puts {abs(move[i])} piece(s) to {i} and kicks out player {-player}")
         
     def display(self):
         print("|                                        | 1 | 1 | 1 |")
