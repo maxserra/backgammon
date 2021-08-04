@@ -43,7 +43,8 @@ class BackgammonGame():
                     ## # Parse the array into array format (will be necessary later)
                     ## strMoves = BackgammonParser().tupleToArrayOfMoves(moves)
                     # Check validity of the moves
-                    if BackgammonRules().checkMoves(self.board.positions, arrMoves, self.whoseTurn, diceRolls):
+                    validMoves = BackgammonRules().checkMoves(self.board.positions, arrMoves, self.whoseTurn, diceRolls)
+                    if validMoves is not None:
                         break
                 # Allow ctrl+C to exit
                 except KeyboardInterrupt:
@@ -53,7 +54,7 @@ class BackgammonGame():
                     pass
                 print("Invalid moves, try again...")
             # Apply moves to the board
-            outcome = self.board.applyMoves(self.whoseTurn, arrMoves)
+            outcome = self.board.applyMoves(self.whoseTurn, validMoves)
             # Handle end of the game
             if outcome == blackPlayer:
                 self.gameFinished = True
@@ -383,80 +384,159 @@ class BackgammonRules():
                                [from_1, to_1],
                                [from_2, to_2],
                                [from_3, to_3]]
+        None 
+            If no valid move is found
         """
+        # Iterate over the given moves
         for moves in arrMoves:
-            # Create movesSteps array
-            movesSteps = moves[:,1] - moves[:,0]
             # Repeat diceRolls 2 times if pairs were rolled
             if diceRolls[0] == diceRolls[1]:
                 diceRolls = np.repeat(diceRolls, 2)
+            # Create movesSteps array
+            movesSteps = moves[:,1] - moves[:,0]
             # Check that the moves match the dice rolled
             if not np.all(np.isin(abs(movesSteps), diceRolls)):
-                logging.debug(f"Moves {moves} don't match the dice rolled {diceRolls}")
+                logging.debug(f"Moves {moves.tolist()} don't match the dice rolled {diceRolls}")
                 continue
             # Construct testBoard
-            testBoard = BackgammonBoard()
-            testBoard.setPositions(positions)
+            testBoard = BackgammonBoard(logging=False)
             # Check the permutations of the moves
             for perm in multiset_permutations([x for x in range(len(moves))]):
+                # Create remainingRolls list (list is used because it has .remove() method)
+                remainingRolls = diceRolls.tolist()
+                # Set positions of testBoard
+                testBoard.setPositions(positions)
                 # Permute the moves
                 movesPerm = moves[perm]
+                movesPermNotValid = False
                 # Check that all single moves are valid
                 for i in range(len(movesPerm)):
-                    if self.checkSingleMove(testBoard.positions, player, moves[i][0], moves[i][1]):
-                        if i+1 == len(moves):
-                            logging.debug(f"Moves {moves} are valid")
-                            return True
-                        testBoard.applySingleMove(player, BackgammonParser().singleMoveToBoardMove(moves[i]))
+                    if self.checkSingleMove(testBoard.positions, player, movesPerm[i][0], movesPerm[i][1]):
+                        # Remove step from remainingRolls list
+                        remainingRolls.remove(abs(movesPerm[i][1] - movesPerm[i][0]))
+                        # If remainigRolls is empty
+                        if not remainingRolls:
+                            logging.debug(f"Moves {movesPerm.tolist()} are valid")
+                            return movesPerm
+                        # Apply the single move to the board
+                        testBoard.applySingleMove(player, BackgammonParser().singleMoveToBoardMove(movesPerm[i]))
                     else:
+                        movesPermNotValid = True
                         break
-                            
-                        
-            print("move not valid")
-        return False
+                if movesPermNotValid:
+                    # If the previous loop was 'broken'
+                    logging.debug(f"Moves {movesPerm.tolist()} are not valid")
+                    continue
+                # movesPerm has less moves than possible
+                if not self.checkPossibleMoves(testBoard.positions, player, np.array(remainingRolls)):
+                    # If there are no more possible moves
+                    logging.debug(f"Moves {movesPerm.tolist()} are valid because no more moves are possible")
+                    return movesPerm
+        # No valid moves found
+        return None
 
     def checkSingleMove(self, positions: np.ndarray, player: int, moveFrom: int, moveTo: int) -> bool:
+        """Check if a single move is valid given the positions, the player and the positions to move from and to
+        
+        Parameters
+        ----------
+        positions : ndarray
+            Array of shape (26,) containing the board positions
+        arrMoves : ndarray
+        player : int
+            Player that makes the moves. Either blackPlayer or whitePlayer
+        moveFrom : int
+            Position to move from
+        moveTo : int
+            Position to move to
+        
+        Results
+        -------
+        bool
+            True if the move is valid
+            False otherwise
+        """
         # Check boundary conditions
         if player != blackPlayer and player != whitePlayer:
-            print("player value invalid: ", player, " Should be: ", blackPlayer, " or ", whitePlayer)
+            logging.debug(f"Invalid player value: {player}")
             return False
-        if moveTo > 25 or moveFrom < 0:
-            print("move boundaries invalid")
+        if moveFrom not in range(len(positions)) or moveTo not in range(len(positions)):
+            logging.debug(f"Move from {moveFrom} to {moveTo} out of range")
             return False
         if abs(moveTo - moveFrom) > 6:
-            print("move larger than 6")
+            logging.debug(f"Move from {moveFrom} to {moveTo} too large")
             return False
         # Check direction
         if player == blackPlayer and moveFrom > moveTo:
-            print("black direction invalid")
+            logging.debug(f"Move from {moveFrom} to {moveTo} invalid direction for player {player}")
             return False
         if player == whitePlayer and moveFrom < moveTo:
-            print("white direction invalid")
+            logging.debug(f"Move from {moveFrom} to {moveTo} invalid direction for player {player}")
             return False
         # Check if origin belongs to player
         if np.sign(positions[moveFrom]) != player:
-            print("origin doesn't belong to player")
+            logging.debug(f"Move from {moveFrom} invalid, position doesn't belong to player {player}")
             return False
         # Check if target belongs to player and has 5+
         if np.sign(positions[moveTo]) == player and abs(positions[moveTo]) >= 5:
-            print("target belongs to player and has 5+")
+            logging.debug(f"Move to {moveTo} invalid, position already has 5 pieces")
             return False
         # Check if target belongs to oponent and has 2+
         if np.sign(positions[moveTo]) != player and abs(positions[moveTo]) >= 2:
-            print("target belongs to oponent and has 2+")
+            logging.debug(f"Move to {moveTo} invalid, position belongs to opponent and has 2+ pieces")
             return False
         # Check if moving 'out' is allowed - black
         if player == blackPlayer and moveTo == 25:
             # Check if all pieces are in the last 6 positions
             if np.any(np.sign(positions[:19]) == player):
+                logging.debug(f"Player {player} still has pieces out of home")
                 return False
         # Check if moving 'out' is allowed - white
         if player == whitePlayer and moveTo == 0:
             # Check if all pieces are in the last 6 positions
             if np.any(np.sign(positions[6:]) == player):
+                logging.debug(f"Player {player} still has pieces out of home")
                 return False
-        
         # The move is valid
         return True
+    
+    def checkPossibleMoves(self, positions: np.ndarray, player: int, diceRolls: np.ndarray) -> bool:
+        """Check if there are possible moves given the positions, player and dice rolled
+        
+        Parameters
+        ----------
+        positions : ndarray
+            Array of shape (26,) containing the board positions
+        player : int
+            Player that makes the moves. Either blackPlayer or whitePlayer
+        diceRolls : ndarray
+            Array of shape (n,) containing the dice rolls to check.
+            Where 0 < n <= 4
+        
+        Returns
+        -------
+        bool
+            True if there are possible moves
+            False if there are no possible moves
+        """
+        # Iterate over the given diceRolls
+        for step in diceRolls:
+            # Get the positions where the player has pieces
+            playerOrigins = np.argwhere(np.sign(positions) == player)
+            # Get the positions where the player can move the pieces
+            playerDestins = playerOrigins - player * step
+            # Clip te values of playerDestins in case some are out of range
+            np.clip(playerDestins, 0, 25)
+            # Iterate over possible moves
+            for i in range(len(playerOrigins)):
+                if self.checkSingleMove(positions, player, playerOrigins[i], playerDestins[i]):
+                    # If possible move found
+                    logging.debug(f"Possible move found")
+                    return True
+        # No possible moves found
+        logging.debug(f"No possible moves found")
+        return False
+        
+
 
 BackgammonGame()
