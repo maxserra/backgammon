@@ -230,7 +230,7 @@ class BackgammonParser():
         # Split input
         moves = strMoves.split(";")
         # Check number of moves. Must be either 2 or 4
-        if len(moves) not in [2,4]:
+        if len(moves) not in [1,2,3,4]:
             logging.debug(f"Invalid moves format '{strMoves}'")
             raise ValueError
         # Create return array
