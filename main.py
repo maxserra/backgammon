@@ -3,7 +3,12 @@ from sympy.utilities.iterables import multiset_permutations
 import copy
 import logging
 
-logging.basicConfig(encoding="utf-8", level=logging.DEBUG, format="%(asctime)s: %(levelname)s: %(message)s", datefmt="%d/%m/%Y %H:%M:%S")
+logging.basicConfig(filename="backgammon.log",
+                    filemode="w",
+                    encoding="utf-8",
+                    level=logging.DEBUG,
+                    format="%(asctime)s: %(levelname)s: %(message)s",
+                    datefmt="%d/%m/%Y %H:%M:%S")
 
 blackPlayer = -1
 whitePlayer = +1
