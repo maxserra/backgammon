@@ -534,6 +534,18 @@ class BackgammonRules():
             if np.any(np.sign(positions[7:]) == player):
                 logging.debug(f"Player {player} still has pieces out of home")
                 return False
+        # Check if pieces kicked-out - black
+        if player == blackPlayer and np.sign(positions[0]) == blackPlayer:
+            # Check if trying to moveFrom somewhere else
+            if moveFrom != 0:
+                logging.debug(f"Player {player} has pieces kicked out")
+                return False
+        # Check if pieces kicked-out - white
+        if player == whitePlayer and np.sign(positions[25]) == whitePlayer:
+            # Check if trying to moveFrom somewhere else
+            if moveFrom != 25:
+                logging.debug(f"Player {player} has pieces kicked out")
+                return False
         # The move is valid
         return True
     
