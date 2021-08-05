@@ -429,8 +429,12 @@ class BackgammonRules():
             movesSteps = moves[:,1] - moves[:,0]
             # Check that the moves match the dice rolled
             if not np.all(np.isin(abs(movesSteps), diceRolls)):
-                logging.debug(f"Moves {moves.tolist()} don't match the dice rolled {diceRolls}")
-                continue
+                # Check if moving pieces out (to 0 or 25) and movesSteps are smaller than diceRolls
+                if np.any(moves[:,1] in [0, 25]) and np.all(np.sort(abs(movesSteps) <= np.sort(diceRolls))):
+                    pass
+                else:
+                    logging.debug(f"Moves {moves.tolist()} don't match the dice rolled {diceRolls}")
+                    continue
             # Construct testBoard
             testBoard = BackgammonBoard(logging=False)
             # Check the permutations of the moves
