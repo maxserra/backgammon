@@ -531,7 +531,7 @@ class BackgammonRules():
         # Check if moving 'out' is allowed - white
         if player == whitePlayer and moveTo == 0:
             # Check if all pieces are in the last 6 positions
-            if np.any(np.sign(positions[6:]) == player):
+            if np.any(np.sign(positions[7:]) == player):
                 logging.debug(f"Player {player} still has pieces out of home")
                 return False
         # The move is valid
