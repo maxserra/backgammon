@@ -1,4 +1,3 @@
-from operator import mul
 import numpy as np
 from sympy.utilities.iterables import multiset_permutations
 import copy
